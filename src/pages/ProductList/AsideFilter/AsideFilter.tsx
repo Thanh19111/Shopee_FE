@@ -9,6 +9,8 @@ import {Controller, useForm} from "react-hook-form";
 import {type Schema, schema} from "../../../utils/rules.ts";
 import {yupResolver} from "@hookform/resolvers/yup";
 import type {NoUndefindedField} from "../../../types/util.type.ts";
+import RatingStars from "../RatingStars";
+import {omit} from "lodash";
 
 type FormData = NoUndefindedField<Pick<Schema, 'price_max' | 'price_min'>>
 interface Props {
@@ -46,6 +48,13 @@ function AsideFilter({queryConfig, categories}: Props) {
       }).toString()
     })
   })
+
+  const handleRemoverAll = () => {
+    navigate({
+      pathname: path.home,
+      search: createSearchParams(omit(queryConfig, ['price_min', 'price_max', 'rating_filter', 'category'])).toString()
+    })
+  }
 
   const navigate = useNavigate();
 
@@ -153,22 +162,10 @@ function AsideFilter({queryConfig, categories}: Props) {
       </div>
       <div className='bg-gray-300 h-1[1px] my-4'/>
       <div className="text-sm">Đánh giá</div>
-      <ul className="my-3">
-        <li className="py-1 pl-2">
-          <Link to='' className='flex items-center text-sm'>
-            {Array(5).fill(0).map((_, i) => (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                   stroke="currentColor" key={i} className="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/>
-              </svg>
-            ))}
-            <span>Trở lên</span>
-          </Link>
-        </li>
-      </ul>
+
+      <RatingStars queryConfig={queryConfig} />
       <div className="bg-gray-300 h-[1px] my-4" />
-      <Button className='w-full py-2 px-2 uppercase bg-orange text-white text-sm hover:bg-orange/80 flex justify-center items-center'>Xóa tất cả</Button>
+      <Button onClick={handleRemoverAll} className='w-full py-2 px-2 uppercase bg-orange text-white text-sm hover:bg-orange/80 flex justify-center items-center'>Xóa tất cả</Button>
     </div>
   );
 }

@@ -8,3 +8,8 @@ export interface ErrorResponse<T>{
   data?: T;
 }
 
+// cú pháp `-?` sẽ loại bỏ key optional
+export type NoUndefindedField<T> = {
+  [P in keyof T]-?: NoUndefindedField<NonNullable<T[P]>>
+}
+

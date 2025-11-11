@@ -12,8 +12,8 @@ import {AppContext} from "../../contexts/app.context.tsx";
 import Button from "../../components/Button";
 import path from "../../constants/paths.ts";
 
-type FormData = Omit<Schema, 'confirm_password'>
-const loginSchema = schema.omit(['confirm_password'])
+type FormData = Pick<Schema, 'email' | 'password'>
+const loginSchema = schema.pick(['email' , 'password'])
 function Login() {
   const navigate = useNavigate();
   const {setIsAuthenticated, setProfile} = useContext(AppContext);

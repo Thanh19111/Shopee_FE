@@ -1,6 +1,6 @@
 import {Link, useNavigate} from "react-router-dom";
 import {useForm} from "react-hook-form";
-import {schema} from "../../utils/rules.ts";
+import {type Schema, schema} from "../../utils/rules.ts";
 import Input from "../../components/Input";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useMutation} from "@tanstack/react-query";
@@ -13,17 +13,14 @@ import {AppContext} from "../../contexts/app.context.tsx";
 import Button from "../../components/Button";
 import path from "../../constants/paths.ts";
 
-interface FormData {
-  email: string;
-  password: string;
-  confirm_password: string;
-}
+type FormData = Pick<Schema, 'email' | 'password' | 'confirm_password'>
+const registerSchema = schema.pick(['email' , 'password', 'confirm_password'])
 
 const Register = () => {
   const navigate = useNavigate();
   const {setIsAuthenticated, setProfile} = useContext(AppContext);
   const {register, setError, handleSubmit, formState: {errors}} = useForm<FormData>({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(registerSchema)
   });
 
   const onSubmit = handleSubmit((data) => {

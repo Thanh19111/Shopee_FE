@@ -2,6 +2,7 @@ import {Link} from "react-router-dom";
 import type {Product as ProductType} from "../../../types/product.type.ts";
 import {formatCurrency, formatNumberToSocialStyle} from "../../../utils/utils.ts";
 import ProductRating from "../../../components/ProductRating";
+import path from "../../../constants/paths.ts";
 
 interface Props {
   product: ProductType
@@ -9,7 +10,8 @@ interface Props {
 
 function Product({product}:Props) {
   return (
-    <Link to='/'>
+    <Link to={`${path.home}${product._id.trim()}`}>
+      <div>{product._id}</div>
       <div className="bg-white overflow-hidden shadow rounded-sm hover:translate-y-[-0.03rem] hover:shadow-md duration-0.1 transition-transform">
         <div className="w-full p-5 pt-[100%] relative">
           <img src={product.image}

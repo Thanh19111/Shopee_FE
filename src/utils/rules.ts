@@ -83,7 +83,8 @@ export const schema = yup.object({
     name: 'price_not_allowed',
     message: 'Giá không phù hợp',
     test: testPriceMinMax
-  })
+  }),
+  name: yup.string().trim().required('Tên sản phẩm là bắt buộc')
 })
 
 function testPriceMinMax(this: yup.TestContext<yup.AnyObject>) {

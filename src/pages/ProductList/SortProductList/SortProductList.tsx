@@ -1,10 +1,11 @@
-import type {QueryConfig} from "../ProductList.tsx";
+
 import {sortBy, order as orderConstant} from "../../../constants/product.ts";
 import classNames from "classnames";
 import type {ProductListConfig} from "../../../types/product.type.ts";
 import {createSearchParams, Link, useNavigate} from "react-router-dom";
 import path from "../../../constants/paths.ts";
 import {omit} from "lodash";
+import type {QueryConfig} from "../../../hooks/useQueryConfig.tsx";
 
 interface Props {
   queryConfig: QueryConfig;

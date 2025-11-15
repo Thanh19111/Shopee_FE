@@ -1,5 +1,5 @@
 import {useParams} from "react-router-dom";
-import {useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery} from "@tanstack/react-query";
 import productApi from "../../apis/product.api.ts";
 import ProductRating from "../../components/ProductRating";
 import {formatCurrency, formatNumberToSocialStyle, getIdFromNameId, rateSale} from "../../utils/utils.ts";
@@ -8,6 +8,10 @@ import {useEffect, useMemo, useRef, useState} from "react";
 import type {Product as ProductType, ProductListConfig} from "../../types/product.type.ts";
 import Product from "../ProductList/Product";
 import QuantityController from "../../components/QuantityController";
+import purchaseApi from "../../apis/purchase.api.ts";
+import {queryClient} from "../../main.tsx";
+import {purchasesStatus} from "../../constants/purchase.ts";
+import {toast} from "react-toastify";
 
 function ProductDetail() {
   const {nameId} = useParams();
@@ -81,6 +85,21 @@ function ProductDetail() {
   const [buyCount, setBuyCount] = useState<number>(1);
   const handleBuyCount = (value: number) => {
     setBuyCount(value);
+  }
+
+  const addToCartMutation = useMutation({
+    mutationFn: (body: {product_id: string, buy_count: number}) => {
+      return purchaseApi.addToCart(body)
+    }
+  })
+
+  const addToCart = () => {
+    addToCartMutation.mutate({buy_count: buyCount, product_id: product?._id as string}, {
+      onSuccess: () => {
+        toast.success("Thêm thành công")
+        return queryClient.invalidateQueries({queryKey: ['purchases', {status: purchasesStatus.inCart}]})
+      }
+    })
   }
 
   if (!product) return null;
@@ -171,6 +190,7 @@ function ProductDetail() {
               </div>
               <div className="mt-8 flex items-center">
                 <button
+                  onClick={addToCart}
                   className="flex h-12 items-center justify-center rounded-sm border border-orange bg-orange/10 px-5 capitalize text-orange shadow-sm hover:bg-orange/5">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="current" viewBox="0 0 24 24" stroke-width="1.5"
                        stroke="currentColor" className="size-5 mr-[10px] stroke-orange text-orange">

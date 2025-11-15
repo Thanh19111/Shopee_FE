@@ -39,7 +39,7 @@ function ProductList() {
             </span>
             <div className='col-span-9'>
               <SortProductList queryConfig = {queryConfig} pageSize={productsData.data.data.pagination.page_size} />
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3">
                 {productsData.data.data.products.map((product) => (
                   <div className='col-span-1' key={product._id}>
                     <Product product={product} />

@@ -1,7 +1,6 @@
 import {createSearchParams, Link, useNavigate} from "react-router-dom";
 import path from "../../../constants/paths.ts";
 import Button from "../../../components/Button";
-import type {QueryConfig} from "../ProductList.tsx";
 import type {Category} from "../../../types/category.type.ts";
 import classNames from "classnames";
 import InputNumber from "../../../components/InputNumber";
@@ -11,6 +10,7 @@ import {yupResolver} from "@hookform/resolvers/yup";
 import type {NoUndefindedField} from "../../../types/util.type.ts";
 import RatingStars from "../RatingStars";
 import {omit} from "lodash";
+import type {QueryConfig} from "../../../hooks/useQueryConfig.tsx";
 
 type FormData = NoUndefindedField<Pick<Schema, 'price_max' | 'price_min'>>
 interface Props {

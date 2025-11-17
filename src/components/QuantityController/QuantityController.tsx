@@ -1,4 +1,5 @@
 import InputNumber, {type InputNumberProps} from "../InputNumber";
+import {useState} from "react";
 
 interface Props extends InputNumberProps {
   max?: number;
@@ -18,19 +19,21 @@ const QuantityController = ({max, onIncrease, onDecrease, onType, classNameWrapp
     }
 
     onType && onType(_value);
+    setLocalValue(_value);
   }
 
   const increase = () => {
-    let _value = Number(value) + 1;
+    let _value = Number(value || localValue) + 1;
     if(max !== undefined && _value > max){
       _value = max;
     }
 
     onIncrease && onIncrease(_value);
+    setLocalValue(_value);
   }
 
   const decrease = () => {
-    let _value = Number(value) - 1;
+    let _value = Number(value || localValue) - 1;
     if(_value < 1){
       _value = 1;
     }
@@ -38,6 +41,7 @@ const QuantityController = ({max, onIncrease, onDecrease, onType, classNameWrapp
     onDecrease && onDecrease(_value);
   }
 
+  const [localValue, setLocalValue] = useState<number>(Number(value || 0));
   return (
     <div className={'flex items-center ' + classNameWrapper}>
       <button
@@ -49,7 +53,7 @@ const QuantityController = ({max, onIncrease, onDecrease, onType, classNameWrapp
         </svg>
       </button>
       <InputNumber
-        value={value}
+        value={value || localValue}
         onChange={handleChange}
         className=''
         classNameError='hidden'

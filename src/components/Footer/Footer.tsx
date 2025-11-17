@@ -5,7 +5,7 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-1">
-            <div>@ 2022 Shopee. Tất cả các quyền được bảo lưu</div>
+            <div>@ 2022 Inchi. Tất cả các quyền được bảo lưu</div>
           </div>
           <div className="lg:col-span-2">
             <div>
@@ -14,21 +14,21 @@ function Footer() {
           </div>
         </div>
         <div className="text-center text-sm mt-10">
-          <div>Công ty TNHH Shopee</div>
+          <div>Công ty TNHH Inchi</div>
           <div className="mt-2">
             Địa chỉ: Tầng 4-5-6, Tòa nhà Capital Place, số 29 đường Liễu Giai, Phường Ngọc Hà, Thành phố Hà Nội, Việt Nam
           </div>
           <div className="mt-2">
-            Chăm sóc khách hàng: Gọi tổng đài Shopee (miễn phí) hoặc Trò chuyện với Shopee ngay trên Trung tâm trợ giúp
+            Chăm sóc khách hàng: Gọi tổng đài Inchi (miễn phí) hoặc Trò chuyện với Inchi ngay trên Trung tâm trợ giúp
           </div>
           <div className="mt-2">
             Chịu Trách Nhiệm Quản Lý Nội Dung: Nguyễn Bùi Anh Tuấn
           </div>
           <div className="mt-2">
-            Mã số doanh nghiệp: 0106773786 do Sở Kế hoạch và Đầu tư TP Hà Nội cấp lần đầu ngày 10/02/2015
+            Mã số doanh nghiệp: 234223 do Sở Kế hoạch và Đầu tư TP Hà Nội cấp lần đầu ngày 10/01/2020
           </div>
           <div className="mt-2">
-            © 2015 - Bản quyền thuộc về Công ty TNHH Shopee
+            © 2020 - Bản quyền thuộc về Công ty TNHH Inchi
           </div>
         </div>
       </div>

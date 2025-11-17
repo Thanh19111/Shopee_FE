@@ -1,7 +1,8 @@
 import classNames from "classnames";
-import type {QueryConfig} from "../../pages/ProductList/ProductList.tsx";
+
 import {createSearchParams, Link} from "react-router-dom";
 import path from "../../constants/paths.ts";
+import type {QueryConfig} from "../../hooks/useQueryConfig.tsx";
 
 interface Props{
   queryConfig: QueryConfig;

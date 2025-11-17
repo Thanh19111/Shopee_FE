@@ -11,6 +11,7 @@ import type {NoUndefindedField} from "../../../types/util.type.ts";
 import RatingStars from "../RatingStars";
 import {omit} from "lodash";
 import type {QueryConfig} from "../../../hooks/useQueryConfig.tsx";
+import InputV2 from "../../../components/InputV2";
 
 type FormData = NoUndefindedField<Pick<Schema, 'price_max' | 'price_min'>>
 interface Props {
@@ -110,26 +111,39 @@ function AsideFilter({queryConfig, categories}: Props) {
         <div>Khoảng giá</div>
         <form className='mt-2' onSubmit={onSubmit}>
           <div className="flex items-start">
-            <Controller
-              control={control}
-              name='price_min'
-              render={({field}) => {
-                return (
-                  <InputNumber
-                    ref={field.ref}
-                    onChange={event => {
-                      field.onChange(event);
-                      trigger('price_max')
-                    }}
-                    value={field.value}
-                    type='text'
-                    className='grow'
-                    name='from'
-                    placeholder='đ Từ'
-                    classNameInput='p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm focus:shadow-sm'
-                  />)
-              }}
-            />
+            {/*<Controller*/}
+            {/*  control={control}*/}
+            {/*  name='price_min'*/}
+            {/*  render={({field}) => {*/}
+            {/*    return (*/}
+            {/*      <InputNumber*/}
+            {/*        type='text'*/}
+            {/*        className='grow'*/}
+            {/*        placeholder='đ Từ'*/}
+            {/*        classNameInput='p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm focus:shadow-sm'*/}
+            {/*        classNameError='hidden'*/}
+            {/*        {...field}*/}
+            {/*        onChange={event => {*/}
+            {/*          field.onChange(event);*/}
+            {/*          trigger('price_max')*/}
+            {/*        }}*/}
+            {/*      />)*/}
+            {/*  }}*/}
+            {/*/>*/}
+
+            <InputV2
+              control = {control}
+              name = 'price_min'
+              type='number'
+              className='grow'
+              placeholder='đ Từ'
+              classNameInput='p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm focus:shadow-sm'
+              classNameError='hidden'
+              onChange={() => {
+                trigger('price_max')
+              }}/>
+
+
             <div className="mx-2 mt-2 shrink-0">-</div>
             <Controller
               control={control}
@@ -152,6 +166,8 @@ function AsideFilter({queryConfig, categories}: Props) {
                   />)
               }}
             />
+
+
           </div>
           <div className='mt-1 text-red-600 min-h-[1.25rem] text-sm text-center'>{errors.price_min?.message}</div>
           <Button

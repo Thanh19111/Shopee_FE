@@ -14,6 +14,7 @@ import {omit} from "lodash";
 import {purchasesStatus} from "../../constants/purchase.ts";
 import purchaseApi from "../../apis/purchase.api.ts";
 import {formatCurrency} from "../../utils/utils.ts";
+import {queryClient} from "../../main.tsx";
 
 function Header() {
   const queryConfig = useQueryConfig();
@@ -24,6 +25,7 @@ function Header() {
     onSuccess: () => {
       setIsAuthenticated(false);
       setProfile(null);
+      queryClient.removeQueries({queryKey: ['purchases', {status: purchasesStatus.inCart}]})
       toast('Logged out');
     }
   });
@@ -60,7 +62,8 @@ function Header() {
 
   const {data: purchasesInCartData} = useQuery({
     queryKey: ['purchases', {status: purchasesStatus.inCart}],
-    queryFn: () => purchaseApi.getPurchases({status: purchasesStatus.inCart})
+    queryFn: () => purchaseApi.getPurchases({status: purchasesStatus.inCart}),
+    enabled: isAuthenticated
   });
 
   const MAX_PURCHASES = 5;
@@ -163,7 +166,7 @@ function Header() {
                   </div>
                   <div className="flex mt-6 items-center justify-between">
                     <div className="capitalize text-xs text-gray-600">{purchasesInCart.length > MAX_PURCHASES ? purchasesInCart.length - MAX_PURCHASES : ''} Thêm vào giỏ hàng</div>
-                    <button className="capitalize bg-orange hover:bg-opacity-90 px-4 py-2 rounded-sm text-white">Xem giỏ hàng</button>
+                    <Link to={path.cart} className="capitalize bg-orange hover:bg-opacity-90 px-4 py-2 rounded-sm text-white">Xem giỏ hàng</Link>
                   </div>
                 </div>
                 ) : (
@@ -179,7 +182,7 @@ function Header() {
                   <path stroke-linecap="round" stroke-linejoin="round"
                         d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
                 </svg>
-                <span className='absolute top-1 left-[=1px] rounded-full px-[5px] py-[1px] bg-white text-orange text-xs'>{purchasesInCart?.length}</span>
+                {purchasesInCart && <span className='absolute top-1 left-[=1px] rounded-full px-[5px] py-[1px] bg-white text-orange text-xs'>{purchasesInCart?.length}</span>}
               </Link>
             </Popover>
           </div>

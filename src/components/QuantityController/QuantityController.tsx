@@ -7,9 +7,17 @@ interface Props extends InputNumberProps {
   onDecrease?: (value: number) => void;
   onType?: (value: number) => void;
   classNameWrapper?: string;
+  onFocusOut?: (value: number) => void;
 }
 
-const QuantityController = ({max, onIncrease, onDecrease, onType, classNameWrapper = 'ml-10', value, ...rest}: Props) => {
+const QuantityController = ({
+                              max,
+                              onIncrease,
+                              onDecrease,
+                              onType,
+                              onFocusOut,
+                              classNameWrapper = 'ml-10',
+                              value, ...rest}: Props) => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let _value = Number(event.target.value);
     if(max !== undefined && _value > max){
@@ -41,6 +49,10 @@ const QuantityController = ({max, onIncrease, onDecrease, onType, classNameWrapp
     onDecrease && onDecrease(_value);
   }
 
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement, Element>) => {
+    onFocusOut && onFocusOut(Number(event.target.value))
+  }
+
   const [localValue, setLocalValue] = useState<number>(Number(value || 0));
   return (
     <div className={'flex items-center ' + classNameWrapper}>
@@ -53,6 +65,7 @@ const QuantityController = ({max, onIncrease, onDecrease, onType, classNameWrapp
         </svg>
       </button>
       <InputNumber
+        onBlur={handleBlur}
         value={value || localValue}
         onChange={handleChange}
         className=''

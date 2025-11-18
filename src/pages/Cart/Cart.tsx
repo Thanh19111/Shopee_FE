@@ -1,4 +1,4 @@
-import {useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery} from "@tanstack/react-query";
 import {purchasesStatus} from "../../constants/purchase.ts";
 import purchaseApi from "../../apis/purchase.api.ts";
 import {Link} from "react-router-dom";
@@ -6,15 +6,84 @@ import path from "../../constants/paths.ts";
 import {formatCurrency, generateNameId} from "../../utils/utils.ts";
 import QuantityController from "../../components/QuantityController";
 import Button from "../../components/Button";
+import {useEffect, useState} from "react";
+import type {Purchase} from "../../types/purchase.type.ts";
+import {produce} from "immer";
+import {keyBy} from "lodash";
+
+interface ExtendedPurchase extends Purchase {
+  disabled: boolean;
+  checked: boolean;
+}
 
 const Cart = () => {
-  const {data: purchasesInCartData} = useQuery({
+  const [extendedPurchases, setExtendedPurchases] = useState<ExtendedPurchase[]>([]);
+
+  const updatePurchaseMutation = useMutation({
+    mutationFn: purchaseApi.updatePurchase,
+    onSuccess: () => {
+      refetch();
+    }
+  });
+
+  const {data: purchasesInCartData, refetch} = useQuery({
     queryKey: ['purchases', {status: purchasesStatus.inCart}],
     queryFn: () => purchaseApi.getPurchases({status: purchasesStatus.inCart}),
   });
 
   const purchasesInCart = purchasesInCartData?.data.data;
+  const handleCheck = (purchaseIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setExtendedPurchases(produce(draft => {
+      draft[purchaseIndex].checked = event.target.checked;
+    }))
+  };
 
+  const handleCheckAll = () => {
+    setExtendedPurchases(
+      prev => prev.map(purchase => ({
+        ...purchase,
+        checked: !isALlChecked
+      }))
+    )
+  }
+
+  const isALlChecked = extendedPurchases.every((purchase) => purchase.checked);
+
+  const handleQuantity = (purchaseIndex: number, value: number, enable: boolean) => {
+    if(enable) {
+      const purchases = extendedPurchases[purchaseIndex];
+      setExtendedPurchases(
+        produce((draft) => {
+          draft[purchaseIndex].disabled = true;
+        })
+      )
+      updatePurchaseMutation.mutate({
+        product_id: purchases.product._id,
+        buy_count: value
+      })
+    }
+  }
+
+  const handleTypeQuantity = (purchaseIndex: number) => (value: number) => {
+    setExtendedPurchases(
+      produce((draft) => {
+        draft[purchaseIndex].buy_count = value;
+      })
+    )
+  }
+
+
+  useEffect(() => {
+    setExtendedPurchases(prev => {
+      const extendedPurchasesObject = keyBy(prev, '_id');
+      return purchasesInCart?.map((purchase) => ({
+          ...purchase,
+          disabled: false,
+          checked: Boolean(extendedPurchasesObject[purchase._id]?.checked) || false
+        })) || []
+      }
+    )
+  }, [purchasesInCart])
   return (
     <div className='bg-neutral-100 py-16'>
       <div className="container">
@@ -24,7 +93,7 @@ const Cart = () => {
               <div className="col-span-6">
                 <div className="flex items-center">
                   <div className="flex flex-shrink-0 items-center justify-center">
-                    <input type='checkbox' className='h-5 w-5 accent-amber-500'/>
+                    <input type='checkbox' onClick={handleCheckAll} className='h-5 w-5 accent-amber-500' checked={isALlChecked}/>
                   </div>
                   <div className="flex-grow text-black">
                     Sản phẩm
@@ -43,13 +112,13 @@ const Cart = () => {
               </div>
             </div>
             <div className="my-3 rounded-sm p-5 bg-white shadow">
-              {purchasesInCart?.map((purchase) => (
+              {extendedPurchases?.map((purchase, index) => (
                 <div key={purchase._id}
                      className='first:mt-0 grid grid-cols-12 text-center rounded-sm border border-gray-200 bg-white py-5 px-4 text-sm text-gray-500 mb-5'>
                   <div className='col-span-6'>
                     <div className="flex">
                       <div className="flex flex-shrink-0 items-center justify-center pr-3">
-                        <input type='checkbox' className='h-5 w-5 accent-amber-500'/>
+                        <input type='checkbox' className='h-5 w-5 accent-amber-500' checked={purchase.checked} onChange={handleCheck(index)}/>
                       </div>
                       <div className="flex-grow">
                         <div className="flex">
@@ -82,6 +151,11 @@ const Cart = () => {
                       </div>
                       <div className="col-span-1">
                         <QuantityController
+                          onFocusOut={(value) => handleQuantity(index, value, value <= purchase.product.quantity && value >= 1 && value !== (purchasesInCart as Purchase[])[index].buy_count)}
+                          onType={handleTypeQuantity(index)}
+                          onIncrease={value => handleQuantity(index, value, value <= purchase.product.quantity)}
+                          onDecrease={value => handleQuantity(index, value, value >= 1)}
+                          disabled={purchase.disabled}
                           value={purchase.buy_count}
                           max={purchase.product.quantity}
                           classNameWrapper='flex items-center'/>
@@ -104,10 +178,10 @@ const Cart = () => {
         <div className='sticky shadow border border-gray-100 bottom-0 z-10 flex flex-col sm:flex-row sm:items-center rounded-sm bg-white p-5 mt-8'>
           <div className="flex items-center">
             <div className="flex flex-shrink-0 items-center justify-center pr-3">
-              <input type='checkbox' className='h-5 w-5 accent-orange'/>
+              <input type='checkbox' onClick={handleCheckAll} className='h-5 w-5 accent-orange' checked={isALlChecked}/>
             </div>
             <button className='mx-3 border-none bg-none'>
-              Chọn tất cả
+              Chọn tất cả ({extendedPurchases.length})
             </button>
             <button className='mx-3 border-none bg-none'>
               Xóa

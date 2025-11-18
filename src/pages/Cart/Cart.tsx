@@ -1,25 +1,24 @@
 import {useMutation, useQuery} from "@tanstack/react-query";
 import {purchasesStatus} from "../../constants/purchase.ts";
 import purchaseApi from "../../apis/purchase.api.ts";
-import {Link} from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
 import path from "../../constants/paths.ts";
 import {formatCurrency, generateNameId} from "../../utils/utils.ts";
 import QuantityController from "../../components/QuantityController";
 import Button from "../../components/Button";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useMemo} from "react";
 import type {Purchase} from "../../types/purchase.type.ts";
 import {produce} from "immer";
 import {keyBy} from "lodash";
 import {toast} from "react-toastify";
-
-interface ExtendedPurchase extends Purchase {
-  disabled: boolean;
-  checked: boolean;
-}
+import {AppContext} from "../../contexts/app.context.tsx";
+import paths from "../../constants/paths.ts";
 
 const Cart = () => {
-  const [extendedPurchases, setExtendedPurchases] = useState<ExtendedPurchase[]>([]);
-
+  const {extendedPurchases, setExtendedPurchases} = useContext(AppContext)
+  // lay state tu product detail
+  const location = useLocation();
+  const choosenPurchaseIdFromLocation = (location.state as {purchaseId: string | null})?.purchaseId;
   const updatePurchaseMutation = useMutation({
     mutationFn: purchaseApi.updatePurchase,
     onSuccess: () => {
@@ -48,7 +47,17 @@ const Cart = () => {
     )
   }
 
-  const isALlChecked = extendedPurchases.every((purchase) => purchase.checked);
+  const isALlChecked = useMemo(() => extendedPurchases.every((purchase) => purchase.checked), [extendedPurchases]);
+  const checkedPurchases = useMemo(() => extendedPurchases.filter(purchase => purchase.checked), [extendedPurchases]);
+
+  const totalCheckedPurchasePrice = useMemo(() => checkedPurchases.reduce((result, current) => {
+    return result + current.product.price * current.buy_count;
+  }, 0), [checkedPurchases]);
+  const totalCheckedPurchaseSavingPrice = useMemo(() => checkedPurchases.reduce((result, current) => {
+    return result + (current.product.price_before_discount - current.product.price) * current.buy_count;
+  }, 0), [checkedPurchases]);
+
+  const checkedPurchasedLength = checkedPurchases.length;
 
   const handleQuantity = (purchaseIndex: number, value: number, enable: boolean) => {
     if(enable) {
@@ -91,9 +100,6 @@ const Cart = () => {
     }
   })
 
-  const checkedPurchases = extendedPurchases.filter(purchase => purchase.checked);
-  const checkedPurchasedLength = checkedPurchases.length;
-
   const handleDelete = (purchaseIndex: number) => () => {
     const purchaseId = extendedPurchases[purchaseIndex]._id;
     deletePurchaseMutation.mutate([purchaseId])
@@ -103,14 +109,6 @@ const Cart = () => {
     const purchasedIds = checkedPurchases.map(purchase => purchase._id);
     deletePurchaseMutation.mutate(purchasedIds);
   }
-
-  const totalCheckedPurchasePrice = checkedPurchases.reduce((result, current) => {
-    return result + current.product.price * current.buy_count;
-  }, 0)
-
-  const totalCheckedPurchaseSavingPrice = checkedPurchases.reduce((result, current) => {
-    return result + (current.product.price_before_discount - current.product.price) * current.buy_count;
-  }, 0)
 
   const handleByPurchase = () => {
     if(checkedPurchases.length > 0){
@@ -125,109 +123,140 @@ const Cart = () => {
   }
 
   useEffect(() => {
+    return () => {
+      history.replaceState(null, '')
+    }
+  }, [])
+
+  useEffect(() => {
     setExtendedPurchases(prev => {
       const extendedPurchasesObject = keyBy(prev, '_id');
-      return purchasesInCart?.map((purchase) => ({
-          ...purchase,
+      return purchasesInCart?.map((purchase) => {
+        const isChoosenPurchaseFromLocation = choosenPurchaseIdFromLocation === purchase._id
+        return {
+        ...purchase,
           disabled: false,
-          checked: Boolean(extendedPurchasesObject[purchase._id]?.checked) || false
-        })) || []
+          checked: isChoosenPurchaseFromLocation || Boolean(extendedPurchasesObject[purchase._id]?.checked) || false
+        }
+      }) || []
       }
     )
-  }, [purchasesInCart])
+  }, [choosenPurchaseIdFromLocation, purchasesInCart])
   return (
     <div className='bg-neutral-100 py-16'>
       <div className="container">
-        <div className="overflow-auto">
-          <div className='min-w-[1000px]'>
-            <div className="grid grid-cols-12 rounded-sm bg-white py-5 px-9 text-sm capitalize text-gray-500 shadow">
-              <div className="col-span-6">
-                <div className="flex items-center">
-                  <div className="flex flex-shrink-0 items-center justify-center">
-                    <input type='checkbox' onClick={handleCheckAll} className='h-5 w-5 accent-amber-500' checked={isALlChecked}/>
-                  </div>
-                  <div className="flex-grow text-black">
-                    Sản phẩm
-                  </div>
-                </div>
-              </div>
-              <div className="col-span-6">
-                <div className="grid-cols-5">
-                  <div className="grid text-center grid-cols-5">
-                    <div className="col-span-2">Đơn giá</div>
-                    <div className="col-span-1">Số lượng</div>
-                    <div className="col-span-1">Số tiền</div>
-                    <div className="col-span-1">Thao tác</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {extendedPurchases.length && <div className="my-3 rounded-sm p-5 bg-white shadow">
-              {extendedPurchases.map((purchase, index) => (
-                <div key={purchase._id}
-                     className='first:mt-0 items-center grid grid-cols-12 text-center rounded-sm border border-gray-200 bg-white py-5 px-4 text-sm text-gray-500 mb-5'>
-                  <div className='col-span-6'>
-                    <div className="flex">
-                      <div className="flex flex-shrink-0 items-center justify-center pr-3">
-                        <input type='checkbox' className='h-5 w-5 accent-amber-500' checked={purchase.checked} onChange={handleCheck(index)}/>
+        {
+          extendedPurchases.length > 0 ? (
+            <>
+              <div className="overflow-auto">
+                <div className='min-w-[1000px]'>
+                  <div
+                    className="grid grid-cols-12 rounded-sm bg-white py-5 px-9 text-sm capitalize text-gray-500 shadow">
+                    <div className="col-span-6">
+                      <div className="flex items-center">
+                        <div className="flex flex-shrink-0 items-center justify-center">
+                          <input type='checkbox' onClick={handleCheckAll} className='h-5 w-5 accent-amber-500'
+                                 checked={isALlChecked}/>
+                        </div>
+                        <div className="flex-grow text-black">
+                          Sản phẩm
+                        </div>
                       </div>
-                      <div className="flex-grow">
-                        <div className="flex">
-                          <Link to={`${path.home}${generateNameId({
-                            name: purchase.product.name,
-                            id: purchase.product._id
-                          })}`} className='h-20 w-20 flex-shrink-0'>
-                            <img alt={purchase.product.name} src={purchase.product.image}/>
-                          </Link>
-                          <div className="flex-grow px-2 pt-1 pb-2">
-                            <Link className='line-clamp-2' to={`${path.home}${generateNameId({
-                              name: purchase.product.name,
-                              id: purchase.product._id
-                            })}`}>
-                              {purchase.product.name}
-                            </Link>
-                          </div>
+                    </div>
+                    <div className="col-span-6">
+                      <div className="grid-cols-5">
+                        <div className="grid text-center grid-cols-5">
+                          <div className="col-span-2">Đơn giá</div>
+                          <div className="col-span-1">Số lượng</div>
+                          <div className="col-span-1">Số tiền</div>
+                          <div className="col-span-1">Thao tác</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className='col-span-6'>
-                    <div className="grid text-center grid-cols-5">
-                      <div className="col-span-2">
-                        <div className="flex items-center justify-center">
+                  {extendedPurchases && extendedPurchases.length > 0 &&
+                    <div className="my-3 rounded-sm p-5 bg-white shadow">
+                      {extendedPurchases.map((purchase, index) => (
+                        <div key={purchase._id}
+                             className='first:mt-0 items-center grid grid-cols-12 text-center rounded-sm border border-gray-200 bg-white py-5 px-4 text-sm text-gray-500 mb-5'>
+                          <div className='col-span-6'>
+                            <div className="flex">
+                              <div className="flex flex-shrink-0 items-center justify-center pr-3">
+                                <input type='checkbox' className='h-5 w-5 accent-amber-500' checked={purchase.checked}
+                                       onChange={handleCheck(index)}/>
+                              </div>
+                              <div className="flex-grow">
+                                <div className="flex">
+                                  <Link to={`${path.home}${generateNameId({
+                                    name: purchase.product.name,
+                                    id: purchase.product._id
+                                  })}`} className='h-20 w-20 flex-shrink-0'>
+                                    <img alt={purchase.product.name} src={purchase.product.image}/>
+                                  </Link>
+                                  <div className="flex-grow px-2 pt-1 pb-2">
+                                    <Link className='line-clamp-2 text-left' to={`${path.home}${generateNameId({
+                                      name: purchase.product.name,
+                                      id: purchase.product._id
+                                    })}`}>
+                                      {purchase.product.name}
+                                    </Link>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className='col-span-6'>
+                            <div className="grid text-center grid-cols-5">
+                              <div className="col-span-2">
+                                <div className="flex items-center justify-center">
                           <span
                             className='text-gray-300 line-through'>đ{formatCurrency(purchase.product.price_before_discount)}</span>
-                          <span className='ml-3'>đ{formatCurrency(purchase.product.price)}</span>
-                        </div>
-                      </div>
-                      <div className="col-span-1">
-                        <QuantityController
-                          onFocusOut={(value) => handleQuantity(index, value, value <= purchase.product.quantity && value >= 1 && value !== (purchasesInCart as Purchase[])[index].buy_count)}
-                          onType={handleTypeQuantity(index)}
-                          onIncrease={value => handleQuantity(index, value, value <= purchase.product.quantity)}
-                          onDecrease={value => handleQuantity(index, value, value >= 1)}
-                          disabled={purchase.disabled}
-                          value={purchase.buy_count}
-                          max={purchase.product.quantity}
-                          classNameWrapper='flex items-center'/>
-                      </div>
-                      <div className="col-span-1">
+                                  <span className='ml-3'>đ{formatCurrency(purchase.product.price)}</span>
+                                </div>
+                              </div>
+                              <div className="col-span-1">
+                                <QuantityController
+                                  onFocusOut={(value) => handleQuantity(index, value, value <= purchase.product.quantity && value >= 1 && value !== (purchasesInCart as Purchase[])[index].buy_count)}
+                                  onType={handleTypeQuantity(index)}
+                                  onIncrease={value => handleQuantity(index, value, value <= purchase.product.quantity)}
+                                  onDecrease={value => handleQuantity(index, value, value >= 1)}
+                                  disabled={purchase.disabled}
+                                  value={purchase.buy_count}
+                                  max={purchase.product.quantity}
+                                  classNameWrapper='flex items-center'/>
+                              </div>
+                              <div className="col-span-1">
                         <span className='text-orange'>
                           đ{formatCurrency(purchase.product.price * purchase.buy_count)}
                         </span>
-                      </div>
-                      <div className="col-span-1">
-                        <button onClick={handleDelete(index)} className='bg-none text-black transition-colors hover:text-orange'>Xóa</button>
-                      </div>
+                              </div>
+                              <div className="col-span-1">
+                                <button onClick={handleDelete(index)}
+                                        className='bg-none text-black transition-colors hover:text-orange'>Xóa
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  }
                 </div>
-              ))}
+              </div>
+            </>
+          ) : (
+            <div className='text-center'>
+              <img src='https://bepharco.com/no-products-found.png' className='w-30 h-32 mx-auto' alt='not-found'/>
+              <div className='font-bold text-gray-400'>Giỏ hàng của bạn còn trống</div>
+              <div className='text-center mt-5'>
+                <Link to={paths.home} className='px-10 hover:bg-orange/80 transition-all py-2 bg-orange uppercase text-white rounded outline-none shadow'>Mua ngay</Link>
+              </div>
             </div>
-            }
-          </div>
-        </div>
-        <div className='sticky shadow border border-gray-100 bottom-0 z-10 flex flex-col sm:flex-row sm:items-center rounded-sm bg-white p-5 mt-8'>
+          )
+        }
+
+        <div
+          className='sticky shadow border border-gray-100 bottom-0 z-10 flex flex-col sm:flex-row sm:items-center rounded-sm bg-white p-5 mt-8'>
           <div className="flex items-center">
             <div className="flex flex-shrink-0 items-center justify-center pr-3">
               <input type='checkbox' onClick={handleCheckAll} className='h-5 w-5 accent-orange' checked={isALlChecked}/>

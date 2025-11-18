@@ -1,4 +1,4 @@
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {useMutation, useQuery} from "@tanstack/react-query";
 import productApi from "../../apis/product.api.ts";
 import ProductRating from "../../components/ProductRating";
@@ -12,6 +12,7 @@ import purchaseApi from "../../apis/purchase.api.ts";
 import {queryClient} from "../../main.tsx";
 import {purchasesStatus} from "../../constants/purchase.ts";
 import {toast} from "react-toastify";
+import paths from "../../constants/paths.ts";
 
 function ProductDetail() {
   const {nameId} = useParams();
@@ -100,6 +101,21 @@ function ProductDetail() {
         return queryClient.invalidateQueries({queryKey: ['purchases', {status: purchasesStatus.inCart}]})
       }
     })
+  }
+
+  const navigate = useNavigate();
+
+  const buyNow = async () => {
+    const res = await addToCartMutation.mutateAsync({buy_count: buyCount, product_id: product?._id as string}, {
+      onSuccess: () => {
+        return queryClient.invalidateQueries({queryKey: ['purchases', {status: purchasesStatus.inCart}]})
+      }
+    })
+
+    const purchase = res.data.data;
+    navigate(paths.cart, {state: {
+      purchaseId: purchase._id
+      }})
   }
 
   if (!product) return null;
@@ -200,6 +216,7 @@ function ProductDetail() {
                   Thêm vào giỏ hàng
                 </button>
                 <button
+                  onClick={buyNow}
                   className="ml-4 flex h-12 min-w-[5rem] items-center justify-center rounded-sm bg-orange px-5 capitalize text-white shadow-sm outline-none hover:bg-orange/90">
                   Mua ngay
                 </button>

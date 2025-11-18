@@ -1,4 +1,4 @@
-import {createSearchParams, Link, useNavigate} from "react-router-dom";
+import {Link} from "react-router-dom";
 import Popover from "../Popover";
 import {useMutation, useQuery} from "@tanstack/react-query";
 import {authApi} from "../../apis/auth.api.ts";
@@ -6,21 +6,17 @@ import {useContext} from "react";
 import {AppContext} from "../../contexts/app.context.tsx";
 import {toast} from "react-toastify";
 import path from "../../constants/paths.ts";
-import useQueryConfig from "../../hooks/useQueryConfig.tsx";
-import {useForm} from "react-hook-form";
-import {schema, type Schema} from "../../utils/rules.ts";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {omit} from "lodash";
 import {purchasesStatus} from "../../constants/purchase.ts";
 import purchaseApi from "../../apis/purchase.api.ts";
 import {formatCurrency} from "../../utils/utils.ts";
 import {queryClient} from "../../main.tsx";
+import NavHeader from "../NavHeader";
+import useSearchProduct from "../../hooks/useSearchProduct.tsx";
 
 function Header() {
-  const queryConfig = useQueryConfig();
-  const navigate = useNavigate();
-  const {isAuthenticated, profile, setProfile, setIsAuthenticated} = useContext(AppContext);
-  const logoutMutation = useMutation({
+  const {onSubmitSearch, register} = useSearchProduct();
+  const {isAuthenticated, setProfile, setIsAuthenticated} = useContext(AppContext);
+  useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
       setIsAuthenticated(false);
@@ -29,36 +25,6 @@ function Header() {
       toast('Logged out');
     }
   });
-
-  type FormData = Pick<Schema, 'name'>;
-  const nameSchema = schema.pick(['name']);
-  const {register, handleSubmit} = useForm<FormData>({
-    defaultValues: {
-      name: ''
-    },
-    resolver: yupResolver(nameSchema)
-  })
-
-  const handleLogout = () =>{
-    logoutMutation.mutate();
-  }
-
-  const onSubmitSearch = handleSubmit((data) => {
-    const config = queryConfig.order ? omit(
-      {
-      ...queryConfig,
-      name: data.name
-      }, ['order', 'sort_by']) :
-      {
-        ...queryConfig,
-        name: data.name
-      }
-
-      navigate({
-      pathname: path.home,
-      search: createSearchParams(config).toString()
-    })
-  })
 
   const {data: purchasesInCartData} = useQuery({
     queryKey: ['purchases', {status: purchasesStatus.inCart}],
@@ -71,50 +37,7 @@ function Header() {
   return (
     <div className='bg-[linear-gradient(-180deg,#FF8A40,#ffa166)] pb-5 pt-2 text-white w-full max-h-[350px]'>
       <div className='container'>
-        <div className="flex justify-end">
-          <Popover className={'flex items-center py-1 hover:text-white/70 cursor-pointer'} renderPopover={
-            <div
-            className="bg-white relative shadow-md rounded-sm border border-gray-200">
-            <div className="flex flex-col py-2 px-3 pr-20">
-              <button className='py-2 px-3 hover:text-orange mt-1'>Tiếng Việt</button>
-              <button className='py-2 px-3 hover:text-orange mt-1'>Tiếng Anh</button>
-            </div>
-          </div>}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                 stroke="currentColor" className="size-6">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418"/>
-            </svg>
-            <span className='mx-1'>Tiếng Việt</span>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                 stroke="currentColor" className="size-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
-            </svg>
-          </Popover>
-          {isAuthenticated && <Popover renderPopover={
-            <div className='bg-white relative shadow-md rounded-sm border border-gray-200'>
-              <Link to= {path.profile} className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 text-left w-full'>Tài khoản của tôi</Link>
-              <Link to='/' className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 text-left w-full'>Đơn mua</Link>
-              <button onClick={handleLogout} className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 text-left w-full'>Đăng xuất</button>
-            </div>
-          } className='flex items-center py-1 hover:text-white/70 cursor-pointer ml-6'>
-            <div className="w-5 h-5 mr-2 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
-                   stroke="currentColor" className="size-6 pb-1">
-                <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
-              </svg>
-            </div>
-            <div>{profile?.email}</div>
-          </Popover>}
-
-          {!isAuthenticated && (
-            <div className='flex items-center'>
-              <Link to={path.register} className='mx-3 capitalize hover:text-white/70' >Đăng ký</Link>
-              <Link to={path.login} className='mx-3 capitalize hover:text-white' >Đăng nhập</Link>
-            </div>
-          )}
-        </div>
+        <NavHeader />
         <div className="grid grid-cols-12 gap-4 mt-4 items-end">
           <Link to='/' className='col-span-2'>
             {/*<svg viewBox='0 0 192 65' className='h-11 w-full fill-white'>*/}
@@ -128,6 +51,7 @@ function Header() {
           <form className='col-span-9' onSubmit={onSubmitSearch}>
             <div className="bg-white rounded-sm p-1 flex">
               <input
+                placeholder='Search...'
                 {...register('name')}
                 type='text'
                 className='text-black px-3 py-2 flex-grow border-none outline-none bg-transparent'/>
@@ -141,8 +65,8 @@ function Header() {
             </div>
           </form>
           <div className='cols-span-1 justify-self-end'>
-            <Popover renderPopover={<div className="bg-white relative shadow-md rounded-sm border border-gray-200 max-w-[400px] text-sm">
-              {purchasesInCart ? (
+            <Popover renderPopover={<div className="bg-white relative shadow-md rounded-sm border border-gray-200 max-w-[400px] min-w-[350px] text-sm">
+              {purchasesInCart && purchasesInCart.length > 0 ? (
                 <div className='p-2'>
                   <div className='text-gray-400 capitalize'>
                     Sản phẩm mới thêm
@@ -170,8 +94,8 @@ function Header() {
                   </div>
                 </div>
                 ) : (
-                <div className='w-60 h-30 py-2'>
-                  <img className='justify-self-center w-34 h-32' src='https://bepharco.com/no-products-found.png' alt='no products' />
+                <div className='py-2 max-w-[400px] min-w-[350px] h-60 flex justify-center'>
+                  <img className='h-2/3 my-auto' src='https://bepharco.com/no-products-found.png' alt='no products' />
                 </div>
               )}
             </div>
@@ -182,7 +106,7 @@ function Header() {
                   <path stroke-linecap="round" stroke-linejoin="round"
                         d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
                 </svg>
-                {purchasesInCart && <span className='absolute top-1 left-[=1px] rounded-full px-[5px] py-[1px] bg-white text-orange text-xs'>{purchasesInCart?.length}</span>}
+                {purchasesInCart && purchasesInCart.length > 0 && <span className='absolute top-1 left-[=1px] rounded-full px-[5px] py-[1px] bg-white text-orange text-xs'>{purchasesInCart?.length}</span>}
               </Link>
             </Popover>
           </div>

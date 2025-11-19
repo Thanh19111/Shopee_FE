@@ -3,13 +3,13 @@ import Popover from "../Popover";
 import path from "../../constants/paths.ts";
 import {Link} from "react-router-dom";
 import {AppContext} from "../../contexts/app.context.tsx";
-import {useMutation} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {authApi} from "../../apis/auth.api.ts";
-import {queryClient} from "../../main.tsx";
 import {purchasesStatus} from "../../constants/purchase.ts";
 import {toast} from "react-toastify";
 
 const NavHeader = () => {
+  const queryClient = useQueryClient();
   const {isAuthenticated, profile, setProfile, setIsAuthenticated} = useContext(AppContext);
   const handleLogout = () =>{
     logoutMutation.mutate();

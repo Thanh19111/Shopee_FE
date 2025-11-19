@@ -1,5 +1,5 @@
 import {useNavigate, useParams} from "react-router-dom";
-import {useMutation, useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import productApi from "../../apis/product.api.ts";
 import ProductRating from "../../components/ProductRating";
 import {formatCurrency, formatNumberToSocialStyle, getIdFromNameId, rateSale} from "../../utils/utils.ts";
@@ -9,12 +9,12 @@ import type {Product as ProductType, ProductListConfig} from "../../types/produc
 import Product from "../ProductList/Product";
 import QuantityController from "../../components/QuantityController";
 import purchaseApi from "../../apis/purchase.api.ts";
-import {queryClient} from "../../main.tsx";
 import {purchasesStatus} from "../../constants/purchase.ts";
 import {toast} from "react-toastify";
 import paths from "../../constants/paths.ts";
 
 function ProductDetail() {
+  const queryClient = useQueryClient();
   const {nameId} = useParams();
   const id = getIdFromNameId(nameId as string);
   const {data: productDetailData} =  useQuery({

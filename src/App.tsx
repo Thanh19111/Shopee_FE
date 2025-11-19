@@ -15,7 +15,7 @@ function App() {
       LocalStorageEventTarget.removeEventListener('clearLS', reset)
     }
   }, [reset])
-  
+
   return <div>
     {routeElement}
     <ToastContainer />

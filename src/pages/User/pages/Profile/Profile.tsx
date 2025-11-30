@@ -6,12 +6,22 @@ import {userSchema, type UserSchema} from "../../../../utils/rules.ts";
 import {Controller, useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import InputNumber from "../../../../components/InputNumber";
-import {useEffect} from "react";
+import {useContext, useEffect, useMemo, useRef, useState} from "react";
 import DateSelect from "../../components/DateSelect";
+import {toast} from "react-toastify";
+import {AppContext} from "../../../../contexts/app.context.tsx";
+import {setProfileToLS} from "../../../../utils/auth.ts";
+import {getAvatarUrl, isAxiosUnprocessableEntityError} from "../../../../utils/utils.ts";
+import type {ErrorResponse} from "../../../../types/util.type.ts";
 
 type FormData = Pick<UserSchema, 'name' | 'address' | 'date_of_birth' | 'phone' | 'avatar'>
+type FormDataError = Omit<FormData, "date_of_birth"> &  {
+  date_of_birth?: string
+}
 const profileSchema = userSchema.pick(['name', 'address', 'date_of_birth', 'phone', 'avatar'])
 const Profile = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const {setProfile} = useContext(AppContext);
   const {register, control, formState: {errors}, handleSubmit, setValue, watch, setError} = useForm<FormData>({
     defaultValues: {
       name: '',
@@ -23,7 +33,10 @@ const Profile = () => {
     resolver: yupResolver(profileSchema)
   });
 
-  const {data: profileData } = useQuery({
+  const [file, setFile] = useState<File>();
+
+
+  const {data: profileData, refetch } = useQuery({
     queryKey: ['profile'],
     queryFn: userApi.getProfile
   });
@@ -38,16 +51,69 @@ const Profile = () => {
       setValue('avatar', profile.avatar);
       setValue('date_of_birth', profile.date_of_birth ? new Date(profile.date_of_birth) : new Date(1990, 0, 1));
     }
-  }, [profile])
+  }, [profile]);
 
-  const updateProfileMutation = useMutation(userApi.updateProfile)
+  const avatar = watch("avatar");
+  console.log(avatar);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (body : FormData) => userApi.updateProfile(body)
+  });
+
+  const uploadAvatarMutation = useMutation({
+    mutationFn: userApi.uploadAvatar
+  });
 
   const onSubmit = handleSubmit(async (data) => {
-    await updateProfileMutation.mutateAsync({
+    try {
+      let avatarName = avatar;
+      if(file) {
+        const form = new FormData();
+        form.append('image', file);
+        const uploadRes = await uploadAvatarMutation.mutateAsync(form);
+        avatarName = uploadRes?.data?.data;
+        setValue("avatar", avatarName);
+      }
+      const res = await updateProfileMutation.mutateAsync({
+        ...data,
+        date_of_birth: data.date_of_birth?.toISOString(),
+        avatar: avatarName
+      });
+      console.log(avatarName);
+      setProfile(res.data.data);
+      setProfileToLS(res.data.data);
+      refetch();
+      toast.success(res.data.message);
+    } catch (error) {
+      if(isAxiosUnprocessableEntityError<ErrorResponse<FormDataError>>(errors)){
+        const formError = errors.response?.data.data;
+        if(formError){
+          Object.keys(formError).forEach((key) => {
+            setError(key as keyof FormDataError, {
+              message: formError[key as keyof FormDataError],
+              type: 'Server'
+            })
+          })
+        }
+      }
+    }
+  });
 
-    })
-  })
-  
+  const handleUpload = () => {
+    fileInputRef.current?.click();
+  }
+
+  const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const fileFromLocal = event.target.files?.[0];
+    setFile(fileFromLocal);
+  }
+
+  const previewImage = useMemo(() => {
+    return file ? URL.createObjectURL(file) : ""
+  }, [file])
+
+
+
   return (
     <div className='rounded-sm bg-white px-2 md:px-7 pb-10 md:pb-20 shadow'>
       <div className="border-b border-b-gray-200 py-6">
@@ -124,9 +190,12 @@ const Profile = () => {
             <div className="flex flex-col items-center">
               <div className="my-5 h-24 w-24">
                 <img className='w-full h-full rounded-full object-cover'
-                     src='https://cf.shopee.vn/file/d04ea22afab6e6d250a370d7ccc2e675_tn' alt='anh'/>
-                <input className='hidden' type='file' accept='.jpg, .jpeg, .png'/>
+                     src={previewImage || getAvatarUrl(avatar)}/>
+                <input
+                  onChange={onFileChange}
+                  ref={fileInputRef} className='hidden' type='file' accept='.jpg, .jpeg, .png'/>
                 <button
+                  onClick={handleUpload}
                   type='submit'
                   className='mt-2 flex h-10 items-center justify-end rounded-sm border bg-white px-4 text-sm text-gray-600 shadow-sm'>Chọn ảnh
                 </button>

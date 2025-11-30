@@ -1,5 +1,6 @@
 import axios, {type AxiosError} from "axios";
 import HttpStatusCode from "../constants/httpStatusCode.enum.ts";
+import config from "../constants/config.ts";
 
 export function isAxiosError<T>(error: unknown): error is AxiosError<T>{
   return axios.isAxiosError(error);
@@ -39,4 +40,10 @@ const removeSpecialCharacter = (str: string) =>
 export const getIdFromNameId = (nameId: string) => {
   const arr = nameId.split('-i,');
   return arr[arr.length - 1];
+}
+
+const userImage = "https://cdn-icons-png.flaticon.com/512/1144/1144760.png";
+
+export const getAvatarUrl = (avatarName?: string) => {
+  return avatarName ? avatarName : userImage;
 }

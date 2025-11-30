@@ -2,7 +2,7 @@ import http from "../utils/https.ts";
 import type {SuccessResponse} from "../types/util.type.ts";
 import type {User} from "../types/user.type.ts";
 
-interface BodyUpdateProfile extends Omit<User, '_id' | 'role' | 'createdAt' | 'updatedAt'> {
+interface BodyUpdateProfile extends Omit<User, '_id' | 'role' | 'createdAt' | 'updatedAt' | 'email'> {
   password?: string;
   newPassword?: string;
 }

@@ -34,19 +34,6 @@ const Register = () => {
       onError: (errors) => {
         if(isAxiosUnprocessableEntityError<ErrorResponse<Omit<FormData, 'confirm_password'>>>(errors)){
           const formError = errors.response?.data.data;
-          // if(formError.data?.email){
-          //   setError('email', {
-          //     message: formError.data?.email,
-          //     type: 'Server',
-          //   })
-          // }
-          // if (formError.data?.password) {
-          //   setError('password', {
-          //     message: formError.data?.password,
-          //     type: 'Server'
-          //   })
-          // }
-
           if(formError){
             Object.keys(formError).forEach((key) => {
               setError(key as keyof Omit<FormData, 'confirm_password'>, {

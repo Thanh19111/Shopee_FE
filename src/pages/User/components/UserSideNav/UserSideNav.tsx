@@ -1,17 +1,21 @@
 import {Link} from "react-router-dom";
 import paths from "../../../../constants/paths.ts";
+import {AppContext} from "../../../../contexts/app.context.tsx";
+import {useContext} from "react";
+import {getAvatarUrl} from "../../../../utils/utils.ts";
 
 const UserSideNav = () => {
+  const { profile } = useContext(AppContext)
   return (
     <div>
       <div className='flex items-center border-b border-b-gray-200 py-4'>
         <Link to={paths.profile} className='h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-black/10'>
-          <img src='https://cf.shopee.vn/file/d04ea22afab6e6d250a370d7ccc2e675_tn' alt='anh'
+          <img src={getAvatarUrl(profile?.avatar)} alt='anh'
                className='h-full w-full object-cover'/>
         </Link>
         <div className="flex-grow pl-4">
           <div className="mb-1 truncate font-semibold text-gray-600">
-            pthanh
+            {profile?.email}
           </div>
           <Link to={paths.profile} className='flex items-center capitalize text-gray-500'>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"

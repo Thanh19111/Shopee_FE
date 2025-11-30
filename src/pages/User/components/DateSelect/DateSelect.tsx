@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {range} from "lodash";
 
 interface Props {
@@ -8,29 +8,43 @@ interface Props {
 }
 
 const DateSelect = ({value, onChange, errorMessage} : Props) => {
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const {value, name} = event.target;
-    const newDate = {
-      ...date,
-      [name]: value
-    }
-    setDate(newDate);
-    onChange && onChange(new Date(newDate.year, newDate.month, newDate.day));
-  }
   const [date, setDate] = useState({
-    day: value?.getDate() || 1,
+    date: value?.getDate() || 1,
     month: value?.getMonth() || 0,
     year: value?.getFullYear() || 1990
   });
+
+  useEffect(() => {
+    if(value) {
+      setDate({
+        date: value.getDate(),
+        month: value.getMonth(),
+        year: value.getFullYear()
+      })
+    }
+  }, [value]);
+
+  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const {value: valueFromSelect, name} = event.target;
+    const newDate = {
+      date: value?.getDate() || date.date,
+      month: value?.getMonth() || date.month,
+      year: value?.getFullYear() || date.year,
+      [name]: Number(valueFromSelect)
+    }
+    setDate(newDate);
+    onChange && onChange(new Date(newDate.year, newDate.month, newDate.date));
+  }
+
   return (
     <div className="mt-2 flex flex-col flex-wrap sm:flex-row">
       <div className="truncate w-[20%] pt-3 sm:text-right capitalize">Ngày sinh</div>
       <div className='sm:pl-5 w-[80%]'>
         <div className="flex justify-between">
           <select
-            value={value?.getDate() || date.day}
+            value={value?.getDate() || date.date}
             onChange={handleChange}
-            name='day'
+            name='date'
             className="h-10 w-[32%] rounded-sm border-black/10 border px-3 hover:border-orange cursor-pointer">
             <option disabled={true}>Ngày</option>
             {range(1, 32).map((item) => (
